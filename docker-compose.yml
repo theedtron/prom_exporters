@@ -1,0 +1,44 @@
+version: '3.3'
+
+services:
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - '9100:9100'
+    networks:
+      - monitoring
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysql-exporter
+    environment: 
+      - DATA_SOURCE_NAME=${MYSQL_USER}:${MYSQL_PASS}@(${MYSQL_IP}:${MYSQL_PORT})/
+      - collect.info_schema.tablestats=true
+      - collect.info_schema.userstats=true
+      - collect.info_schema.query_response_time=true
+      - collect.auto_increment.columns=true
+      - collect.binlog_size=true
+      - collect.perf_schema.eventsstatements=true
+      - collect.perf_schema.eventswaits=true
+      - collect.perf_schema.file_events=true
+      - collect.perf_schema.indexiowaits=true
+      - collect.perf_schema.tableiowaits=true
+      - collect.perf_schema.tablelocks=true
+    ports:
+      - 9104:9104
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
